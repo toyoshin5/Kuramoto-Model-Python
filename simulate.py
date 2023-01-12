@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import random
 import math
 
-N = 100 #ノード数
-K = 4 #平均次数
-P = 0.1 #リンクを再接続する確率
+N = 10 #ノード数
+K = 9 #平均次数
+P = 1 #リンクを再接続する確率
 th_min=-math.pi#初期位相の最小値
 th_max=math.pi#初期位相の最大値
-w_min=-1#固有振動数の最小値
+w_min=0.6#固有振動数の最小値
 w_max=1#固有振動数の最大値
 sigma=1#結合強度
 dT = 0.1#時間刻み
@@ -33,16 +33,36 @@ def draw_graph(G,pos,show=True):
     imageNum += 1
     plt.close()
 
-def update_graph(G,dT,sigma):
+def runge_kutta(G,dT,sigma,i):
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    nei_cnt = 0
+    for j in G.neighbors(i):
+        nei_cnt += 1
+        th_sum += math.sin(G.nodes[i]['th'] - G.nodes[j]['th'])
+    k1 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    for j in G.neighbors(i):
+        th_sum += math.sin(G.nodes[i]['th'] + k1/2 - G.nodes[j]['th'])
+    k2 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    for j in G.neighbors(i):
+        th_sum += math.sin(G.nodes[i]['th'] + k2/2 - G.nodes[j]['th'])
+    k3 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    for j in G.neighbors(i):
+        th_sum += math.sin(G.nodes[i]['th'] + k3 - G.nodes[j]['th'])
+    k4 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
+    return (k1 + 2*k2 + 2*k3 + k4) / 6 
+
+#つぎの時刻の位相を計算
+def calc_next(G,dT,sigma):
     for i in range(N):
-        #sin(θi−θj)の平均を計算
-        th_sum = 0
-        nei_cnt = 0
-        for j in G.neighbors(i):
-            nei_cnt += 1
-            th_sum += math.sin(G.nodes[i]['th'] - G.nodes[j]['th'])
-        # #ノードiの位相を更新(オイラー法)
-        G.nodes[i]['th'] += dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
+        #ノードiの位相を更新(ルンゲクッタ法)
+        G.nodes[i]['th'] += runge_kutta(G,dT,sigma,i)
 #秩序パラメータを計算
 def calc_orderR(G):
     n = len(G.nodes)
@@ -58,7 +78,7 @@ def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True):
     #蔵本モデルで時刻t=0からt=Tまでの位相をt刻みで計算
     R = calc_orderR(G) #秩序パラメータの時間平均
     for t in np.arange(0,T,dT):
-        update_graph(G,dT,sigma)
+        calc_next(G,dT,sigma)
         #秩序パラメータを計算
         r = calc_orderR(G)
         if log:
@@ -80,5 +100,5 @@ if __name__ == '__main__':
     for i in range(N):
         G.nodes[i]['th'] = random.uniform(th_min, th_max)
         G.nodes[i]['freq'] = random.uniform(w_min, w_max)
-    R = simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=False)
+    R = simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True)
     print("R=",R)
