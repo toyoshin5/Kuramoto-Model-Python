@@ -37,26 +37,28 @@ def runge_kutta(G,dT,sigma,i):
     #sin(θi−θj)の平均を計算
     th_sum = 0
     nei_cnt = 0
-    for j in G.neighbors(i):
+    nei = G.neighbors(i)
+    for j in nei:
         nei_cnt += 1
-        th_sum += math.sin(G.nodes[i]['th'] - G.nodes[j]['th'])
-    k1 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
-    #sin(θi−θj)の平均を計算
-    th_sum = 0
-    for j in G.neighbors(i):
-        th_sum += math.sin(G.nodes[i]['th'] + k1/2 - G.nodes[j]['th'])
-    k2 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
-    #sin(θi−θj)の平均を計算
-    th_sum = 0
-    for j in G.neighbors(i):
-        th_sum += math.sin(G.nodes[i]['th'] + k2/2 - G.nodes[j]['th'])
-    k3 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
-    #sin(θi−θj)の平均を計算
-    th_sum = 0
-    for j in G.neighbors(i):
-        th_sum += math.sin(G.nodes[i]['th'] + k3 - G.nodes[j]['th'])
-    k4 = dT * (G.nodes[i]['freq'] - sigma * th_sum / nei_cnt)
-    return (k1 + 2*k2 + 2*k3 + k4) / 6 
+        th_sum += math.sin(G.nodes[j]['th'] - G.nodes[i]['th'])
+    k1 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    return k1
+    # #sin(θi−θj)の平均を計算
+    # th_sum = 0
+    # for j in nei:
+    #     th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k1/2))
+    # k2 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    # #sin(θi−θj)の平均を計算
+    # th_sum = 0
+    # for j in nei:
+    #     th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k2/2))
+    # k3 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    # #sin(θi−θj)の平均を計算
+    # th_sum = 0
+    # for j in nei:
+    #     th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k3))
+    # k4 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    # return (k1 + 2*k2 + 2*k3 + k4) / 6 
 
 #つぎの時刻の位相を計算
 def calc_next(G,dT,sigma):
@@ -74,9 +76,24 @@ def calc_orderR(G):
     #|1/N*sum(e^iθ)|を計算
     return abs(th_avg)
 
-def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True):
+#一次近傍コヒーレンスを計算
+def calc_orderR1(G):
+    n = len(G.nodes)
+    sum = 0
+    for i in G.nodes:
+        th_sum = 0
+        th_cnt = 0
+        nei = G.neighbors(i)
+        for j in nei:
+            th_sum += math.e**(1j*(G.nodes[i]['th']-G.nodes[j]['th']))
+            th_cnt += 1
+        th_avg = abs(th_sum / th_cnt)        
+    avg = th_avg / n
+    return avg
+
+def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,R=True):
     #蔵本モデルで時刻t=0からt=Tまでの位相をt刻みで計算
-    R = calc_orderR(G) #秩序パラメータの時間平均
+    R = calc_orderR(G) if R else calc_orderR1(G) #秩序パラメータの時間平均
     for t in np.arange(0,T,dT):
         calc_next(G,dT,sigma)
         #秩序パラメータを計算
