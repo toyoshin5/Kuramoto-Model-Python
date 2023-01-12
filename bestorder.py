@@ -76,13 +76,18 @@ if __name__ == '__main__':
             #ネットワーク特徴量C,L,Wを計算
             C = nx.average_clustering(g)
             L = nx.average_shortest_path_length(g)
-            # w = np.mean(list(nx.get_node_attributes(g, 'freq').values()))
-            # #隣接行列
-            # a = nx.to_numpy_array(g)
-            # for i in range(N):
-            #     for j in range(N):
-            
-            print("delta=",stopCnt ,"bestR=",bestR,"C=",C,"L=",L,"step=",step)
+            w = list(nx.get_node_attributes(g, 'freq').values())
+            meanw = np.mean(w)
+            #隣接行列
+            a = nx.to_numpy_array(g)
+            bunsi = 0
+            bunbo = 0
+            for i in range(N):
+                for j in range(N):
+                    bunsi+=a[i][j]*(w[i]-meanw)*(w[j]-meanw)
+                    bunbo+=a[i][j]*(w[i]-meanw)*(w[i]-meanw)
+            W = bunsi/bunbo
+            print("delta=",stopCnt ,"bestR=",bestR,"C=",C,"L=",L,"W=",W,"step=",step)
             bestR = R
             bestG = g
             step += 1
