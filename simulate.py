@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import random
 import math
 
-N = 10 #ノード数
-K = 9 #平均次数
+N = 100 #ノード数
+K = 4 #平均次数
 P = 1 #リンクを再接続する確率
 th_min=-math.pi#初期位相の最小値
 th_max=math.pi#初期位相の最大値
-w_min=0.6#固有振動数の最小値
+w_min=-1#固有振動数の最小値
 w_max=1#固有振動数の最大値
 sigma=1#結合強度
 dT = 0.1#時間刻み
