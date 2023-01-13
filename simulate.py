@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 import random
 import math
 
-N = 100 #ノード数
+N = 10 #ノード数
 K = 4 #平均次数
 P = 1 #リンクを再接続する確率
 th_min=-math.pi#初期位相の最小値
 th_max=math.pi#初期位相の最大値
-w_min=-1#固有振動数の最小値
+w_min=0.7#固有振動数の最小値
 w_max=1#固有振動数の最大値
 sigma=1#結合強度
-dT = 0.1#時間刻み
-T = 100#時間
+dT = 0.02#時間刻み
+T = 20#時間
 
 imageNum = 0
 #グラフを表示
@@ -42,29 +42,39 @@ def runge_kutta(G,dT,sigma,i):
         nei_cnt += 1
         th_sum += math.sin(G.nodes[j]['th'] - G.nodes[i]['th'])
     k1 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    for j in nei:
+        th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k1/2))
+    k2 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    for j in nei:
+        th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k2/2))
+    k3 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    #sin(θi−θj)の平均を計算
+    th_sum = 0
+    for j in nei:
+        th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k3))
+    k4 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
+    return (k1 + 2*k2 + 2*k3 + k4) / 6 
+
+def euler(G,dT,sigma,i):
+    th_sum = 0
+    nei_cnt = 0
+    nei = G.neighbors(i)
+    for j in nei:
+        nei_cnt += 1
+        th_sum += math.sin(G.nodes[j]['th'] - G.nodes[i]['th'])
+    k1 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
     return k1
-    # #sin(θi−θj)の平均を計算
-    # th_sum = 0
-    # for j in nei:
-    #     th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k1/2))
-    # k2 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
-    # #sin(θi−θj)の平均を計算
-    # th_sum = 0
-    # for j in nei:
-    #     th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k2/2))
-    # k3 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
-    # #sin(θi−θj)の平均を計算
-    # th_sum = 0
-    # for j in nei:
-    #     th_sum += math.sin(G.nodes[j]['th'] - (G.nodes[i]['th'] + k3))
-    # k4 = dT * (G.nodes[i]['freq'] + sigma * th_sum / nei_cnt)
-    # return (k1 + 2*k2 + 2*k3 + k4) / 6 
 
 #つぎの時刻の位相を計算
-def calc_next(G,dT,sigma):
+def calc_next(G,dT,sigma,N):
     for i in range(N):
-        #ノードiの位相を更新(ルンゲクッタ法)
-        G.nodes[i]['th'] += runge_kutta(G,dT,sigma,i)
+        #ノードiの位相を更新(euler法)
+        G.nodes[i]['th'] += euler(G,dT,sigma,i)
+        #G.nodes[i]['th'] += runge_kutta(G,dT,sigma,i)
 #秩序パラメータを計算
 def calc_orderR(G):
     n = len(G.nodes)
@@ -87,22 +97,24 @@ def calc_orderR1(G):
         for j in nei:
             th_sum += math.e**(1j*(G.nodes[i]['th']-G.nodes[j]['th']))
             th_cnt += 1
-        th_avg = abs(th_sum / th_cnt)    
+        th_avg = abs(th_sum / th_cnt)
         sum += th_avg    
     avg = sum / n
     return avg
 
-def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,R=True):
+def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,Rmode='R'):
     #蔵本モデルで時刻t=0からt=Tまでの位相をt刻みで計算
-    R = calc_orderR(G) if R else calc_orderR1(G) #秩序パラメータの時間平均
+    interval = T/100
+
+    R = calc_orderR(G) if Rmode=='R' else calc_orderR1(G) #秩序パラメータの時間平均
     for t in np.arange(0,T,dT):
-        calc_next(G,dT,sigma)
+        calc_next(G,dT,sigma,G.number_of_nodes())
         #秩序パラメータを計算
-        r = calc_orderR(G) if R else calc_orderR1(G)
+        r = calc_orderR(G) if Rmode=='R' else calc_orderR1(G)
         if log:
             print(round(t,1),r)
         R+=r
-        if draw and t%1==0:
+        if draw and int(t*10000)%int(interval*10000)==0:
             draw_graph(G,pos,show=False)
     R=R/(T/dT+1)#平均   
     return R
@@ -118,5 +130,5 @@ if __name__ == '__main__':
     for i in range(N):
         G.nodes[i]['th'] = random.uniform(th_min, th_max)
         G.nodes[i]['freq'] = random.uniform(w_min, w_max)
-    R = simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True)
+    R = simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,Rmode='R1')
     print("R=",R)

@@ -71,7 +71,7 @@ if __name__ == '__main__':
     while stopCnt < 500:
         #bestGのノードを一つつなぎ替える
         g = update_link(bestG.copy())
-        R = s.simulateOnce(g.copy(),T=T,dT=dT,sigma=sigma,draw=False,log=False,R=False)
+        R = s.simulateOnce(g.copy(),T=T,dT=dT,sigma=sigma,draw=False,log=False,Rmode='R1')
         if R > bestR:
             #ネットワーク特徴量C,L,Wを計算
             C = nx.average_clustering(g)
