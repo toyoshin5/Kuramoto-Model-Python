@@ -87,8 +87,9 @@ def calc_orderR1(G):
         for j in nei:
             th_sum += math.e**(1j*(G.nodes[i]['th']-G.nodes[j]['th']))
             th_cnt += 1
-        th_avg = abs(th_sum / th_cnt)        
-    avg = th_avg / n
+        th_avg = abs(th_sum / th_cnt)    
+        sum += th_avg    
+    avg = sum / n
     return avg
 
 def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,R=True):
@@ -97,7 +98,7 @@ def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,R=True):
     for t in np.arange(0,T,dT):
         calc_next(G,dT,sigma)
         #秩序パラメータを計算
-        r = calc_orderR(G)
+        r = calc_orderR(G) if R else calc_orderR1(G)
         if log:
             print(round(t,1),r)
         R+=r
