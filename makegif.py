@@ -1,4 +1,4 @@
-#images/の画像でgifを作成
+#images/の画像からgifを作成
 
 from PIL import Image
 pictures=[]

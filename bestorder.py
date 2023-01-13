@@ -67,11 +67,10 @@ if __name__ == '__main__':
     step = 1
     bestR = 0
     bestG = G.copy()
-    draw_graph_w(bestG)
     while stopCnt < 500:
         #bestGのノードを一つつなぎ替える
         g = update_link(bestG.copy())
-        R = s.simulateOnce(g.copy(),T=T,dT=dT,sigma=sigma,draw=False,log=False,Rmode='R1')
+        R = s.simulateOnce(g.copy(),T=T,dT=dT,sigma=sigma,draw=False,log=False,Rmode='R1') 
         if R > bestR:
             #ネットワーク特徴量C,L,Wを計算
             C = nx.average_clustering(g)
@@ -87,7 +86,7 @@ if __name__ == '__main__':
                     bunsi+=a[i][j]*(w[i]-meanw)*(w[j]-meanw)
                     bunbo+=a[i][j]*(w[i]-meanw)*(w[i]-meanw)
             W = bunsi/bunbo
-            print("delta=",stopCnt ,"bestR=",bestR,"C=",C,"L=",L,"W=",W,"step=",step)
+            print("delta=",stopCnt ,"bestR=",bestR,"C=",C,"L=",L,"W=",W,"step=",step) #delta:連続して最適解が更新されなかった回数
             bestR = R
             bestG = g
             step += 1

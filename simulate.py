@@ -112,7 +112,7 @@ def simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,Rmode='R'):
         #秩序パラメータを計算
         r = calc_orderR(G) if Rmode=='R' else calc_orderR1(G)
         if log:
-            print(round(t,1),r)
+            print("t=",round(t,1),"r(t)=",r)
         R+=r
         if draw and int(t*10000)%int(interval*10000)==0:
             draw_graph(G,pos,show=False)
@@ -130,5 +130,5 @@ if __name__ == '__main__':
     for i in range(N):
         G.nodes[i]['th'] = random.uniform(th_min, th_max)
         G.nodes[i]['freq'] = random.uniform(w_min, w_max)
-    R = simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,Rmode='R1')
+    R = simulateOnce(G,T=T,dT=dT,sigma=sigma,draw=True,log=True,Rmode='R') #draw:グラフ画像を出力するかどうか　log:ログを出力するかどうか
     print("R=",R)
